@@ -6,16 +6,22 @@ try:
     from PIL import Image
 except ImportError:
     import Image
+import os
 
 COMPLETE_MSG = '''Hey {mention}, your text file is ready! '''
-IMG_TMP_LOC = 'data/image2text-tmp'
-TEXT_TMP_LOC = 'data/image2text-tmp'
+DATA_LOC = 'data/toText'
+IMG_TMP_LOC = os.path.join(DATA_LOC, 'image2text-tmp')
+TEXT_TMP_LOC_START = os.path.join(DATA_LOC, 'image2text-tmp')
+
+if not os.path.isdir(DATA_LOC):
+    os.mkdir(DATA_LOC)
 
 
 class Plugin(plugin.ThreadedPlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, should_spawn_thread=False, **kwargs)
         self.public_namespace.ocr_q = plugin.Queue()
+        self.text_tmp_index = 0
         self.threaded_kwargs = {"ocr_q":self.public_namespace.ocr_q}
         self.spawn_process()
 
@@ -41,9 +47,11 @@ class Plugin(plugin.ThreadedPlugin):
                 success = True
 
             if success:
+                txt_filename = TEXT_TMP_LOC_START+str(self.text_tmp_index)
                 # create attachment text file
-                with open(TEXT_TMP_LOC, 'w') as f:
+                with open(txt_filename, 'w') as f:
                     f.write(text)
-                q.put({self.SEND_FILE:{plugin.ARGS:[discord_channel, TEXT_TMP_LOC], plugin.KWARGS:{'filename':'text_from_img.txt', 'content':msg_content}}})
+                q.put({self.SEND_FILE:{plugin.ARGS:[discord_channel, txt_filename], plugin.KWARGS:{'filename':'text_from_img.txt', 'content':msg_content}}})
+                self.text_tmp_index += 1
             else:
                 q.put({self.SEND_MESSAGE:{plugin.ARGS:[discord_channel], plugin.KWARGS:{'content':text}}})
