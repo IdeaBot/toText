@@ -32,8 +32,18 @@ class Plugin(plugin.ThreadedPlugin):
             with open(IMG_TMP_LOC, 'wb') as f:
                 f.write(resp.content)
             # process img with ocr
-            text = pytesseract.image_to_string(Image.open(IMG_TMP_LOC))
-            # create attachment text file
-            with open(TEXT_TMP_LOC, 'w') as f:
-                f.write(text)
-            q.put({self.SEND_FILE:{plugin.ARGS:[discord_channel, TEXT_TMP_LOC], plugin.KWARGS:{'filename':'text_from_img.txt', 'content':msg_content}}})
+            try:
+                text = pytesseract.image_to_string(Image.open(IMG_TMP_LOC))
+            except pytesseract.pytesseract.TesseractNotFoundError as e:
+                text = 'Text to Image conversion failed.\nError: `%s`' % e
+                success = False
+            else:
+                success = True
+
+            if success:
+                # create attachment text file
+                with open(TEXT_TMP_LOC, 'w') as f:
+                    f.write(text)
+                q.put({self.SEND_FILE:{plugin.ARGS:[discord_channel, TEXT_TMP_LOC], plugin.KWARGS:{'filename':'text_from_img.txt', 'content':msg_content}}})
+            else:
+                q.put({self.SEND_MESSAGE:{plugin.ARGS:[discord_channel], plugin.KWARGS:{'content':text}}})
