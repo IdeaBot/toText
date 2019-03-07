@@ -18,6 +18,10 @@ if not os.path.isdir(DATA_LOC):
 
 
 class Plugin(plugin.ThreadedPlugin):
+    ''' Tesseract OCR image reader
+
+For more information:
+```@Idea help img2text``` '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, should_spawn_thread=False, **kwargs)
         self.public_namespace.ocr_q = plugin.Queue()

@@ -4,13 +4,24 @@ import re
 VALID_IMG_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
 class Command(command.DirectOnlyCommand):
+    '''Get the text from an image
+
+**Usage**
+Add an image to the text2img queue
+```@Idea read this ```
+Don't forget to attach/upload the image!
+(Links won't work)
+
+When your image has been processed, the result will be sent to the same channel.
+
+Powered by tesseract, a powerful Optical Character Recognition system '''
     def matches(self, message):
         # print(message.attachments)
         return self.collect_args(message) is not None and get_image_from_attachments(message.attachments) is not None
-    
+
     def collect_args(self, message):
         return re.search(r'(?:(?:ocr|read|text(?:-?ify))(?:/s+this)?|convert\s+this\s+to\s+text)', message.content, re.I)
-    
+
     def action(self, message):
         queue_num = self.public_namespace.ocr_q.qsize() + 1
         to_q = {
@@ -28,4 +39,3 @@ def get_image_from_attachments(attachments):
         if file_ending.lower() in VALID_IMG_EXTENSIONS:
             return i['url']
     return None
-    
